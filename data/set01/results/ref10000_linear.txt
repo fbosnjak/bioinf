@@ -1,0 +1,20 @@
+load graph
+2 original nodes
+2 split nodes
+20000bp
+0 edges
+0 nodes with in-degree >= 2
+load reads
+preprocess graph
+The graph is linear / a tree / a forest
+Collapsed nodes: 2
+Collapsed edges: 0
+Nodes: 20000
+Edges: 19998
+BPs: 20000
+start bitvector alignment
+bitvector took 1249293us
+start cellbycell alignment
+cellbycell took 33830377us
+ratio: 27.0796
+scores match
