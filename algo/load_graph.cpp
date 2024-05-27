@@ -52,6 +52,9 @@ struct Graph
 
 map<string, Node *> nodeMap;
 
+/*
+  Split string by delimiter
+*/
 vector<string> split(string s, string delimiter)
 {
   size_t pos_start = 0, pos_end, delim_len = delimiter.length();
@@ -67,6 +70,44 @@ vector<string> split(string s, string delimiter)
 
   res.push_back(s.substr(pos_start));
   return res;
+}
+
+/*
+  Decompose nodes into from old graph into one char sequences in the new graph
+*/
+void decompose(Graph *oldGraph, Graph *newGraph)
+{
+  for (auto n : oldGraph->nodes)
+  {
+    Node *oldNode;
+    for (int i = 0; i < n->sequence.size(); i++)
+    {
+      string newName = n->name + "_" + to_string(i);
+      string oneCharSequence = "";
+      oneCharSequence += n->sequence[i];
+
+      Node *node = new Node(newName, oneCharSequence);
+      newGraph->nodes.push_back(node);
+      nodeMap[newName] = node;
+
+      if (i > 0)
+      {
+        oldNode->edges.push_back(new Edge(oldNode, false, node, false, 0));
+      }
+      oldNode = node;
+    }
+  }
+
+  for (auto n : oldGraph->nodes)
+  {
+    for (auto e : n->edges)
+    {
+      Node *node1, *node2;
+      node1 = nodeMap[e->node_a->name + "_" + to_string(e->node_a->sequence.size() - 1 - e->overlap)];
+      node2 = nodeMap[e->node_b->name + "_0"];
+      node1->edges.push_back(new Edge(node1, false, node2, false, 0));
+    }
+  }
 }
 
 int main()
@@ -107,15 +148,20 @@ int main()
     nodeMap[splittedInput[1]]->edges.push_back(edge);
   }
 
-  for (auto i : graph->nodes)
-  {
-    for (auto j : i->edges)
+  Graph *oneCharGraph = new Graph();
+  decompose(graph, oneCharGraph);
+
+  /*
+    for (auto i : oneCharGraph->nodes)
     {
-      cout << j->node_a->name << " " << j->node_a->sequence << " / ";
-      cout << j->revComplement_a << endl;
-      cout << j->node_b->name << " " << j->node_b->sequence << " / ";
-      cout << j->revComplement_b << endl;
-      cout << j->overlap << endl;
+      for (auto j : i->edges)
+      {
+        cout << j->node_a->name << " " << j->node_a->sequence << " / ";
+        cout << j->revComplement_a << endl;
+        cout << j->node_b->name << " " << j->node_b->sequence << " / ";
+        cout << j->revComplement_b << endl;
+        cout << j->overlap << endl;
+      }
     }
-  }
+    */
 }
