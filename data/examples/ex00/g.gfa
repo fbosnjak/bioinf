@@ -1,0 +1,19 @@
+S	1	AGCTTTTCATT
+S	2	C
+S	3	G
+L	1	+	2	+	0M
+L	1	+	3	+	0M
+L	2	+	4	+	0M
+L	3	+	4	+	0M
+S	4	TGACTGC
+S	5	A
+S	6	A
+L	4	+	5	+	0M
+L	4	+	6	+	0M
+L	5	+	7	+	0M
+L	6	+	7	+	0M
+S	7	ACGGGCAAT
+S	8	A
+S	9	A
+L	7	+	8	+	0M
+L	7	+	9	+	0M

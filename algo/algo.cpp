@@ -6,6 +6,8 @@
 #include <set>
 #include <algorithm>
 #include <deque>
+#include <fstream>
+
 using namespace std;
 
 struct Node;
@@ -165,13 +167,15 @@ vector<Node *> topoSort(Graph *graph)
   Returns the graph from .gfa file
   Graph is decomposed into nodes of sequence size 1
 */
-Graph *getGraphFromFile()
+Graph *getGraphFromFile(string &graphFile)
 {
   Graph *graph = new Graph();
   vector<vector<string>> edges;
 
+  ifstream file(graphFile);
+
   string line;
-  while (getline(cin, line))
+  while (getline(file, line))
   {
     if (line == "")
       break;
@@ -214,6 +218,32 @@ Graph *getGraphFromFile()
   }
 
   return oneCharGraph;
+}
+
+/*
+  Load patterns from fastq file
+*/
+vector<string> loadPatterns(const string &patternsFile)
+{
+  ifstream file(patternsFile);
+
+  vector<string> patterns;
+  string line;
+
+  while (getline(file, line))
+  {
+    if (line[0] != '@')
+    {
+      continue;
+    }
+
+    if (getline(file, line))
+    {
+      patterns.push_back(line);
+    }
+  }
+
+  return patterns;
 }
 
 /*
@@ -286,10 +316,35 @@ void navarro(Graph *graph, string pattern)
   }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-  Graph *graph = getGraphFromFile();
+  string graphFile;
+  string patternsFile;
 
-  string pattern = "TCATTCTGACTGCAACGGGC";
-  navarro(graph, pattern);
+  for (int i = 1; i < argc; i++)
+  {
+    if (string(argv[i]) == "-g" && i + 1 < argc)
+    {
+      graphFile = argv[i + 1];
+    }
+    else if (string(argv[i]) == "-p" && i + 1 < argc)
+    {
+      patternsFile = argv[i + 1];
+    }
+  }
+
+  if (graphFile.empty() || patternsFile.empty())
+  {
+    cout << graphFile << "|" << patternsFile << endl;
+    cout << "Usage: algo -g <graph_file> -p <patterns_file>" << endl;
+    return 1;
+  }
+
+  Graph *graph = getGraphFromFile(graphFile);
+  vector<string> patterns = loadPatterns(patternsFile);
+
+  for (auto pattern : patterns)
+  {
+    navarro(graph, pattern);
+  }
 }
