@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <deque>
 #include <fstream>
+#include <chrono>
 
 using namespace std;
 
@@ -343,8 +344,15 @@ int main(int argc, char *argv[])
   Graph *graph = getGraphFromFile(graphFile);
   vector<string> patterns = loadPatterns(patternsFile);
 
-  for (auto pattern : patterns)
+  auto startTime = chrono::high_resolution_clock::now();
+
+  for (auto i = 0; i < patterns.size(); i++)
   {
-    navarro(graph, pattern);
+    cout << "Pattern " << i << ":" << endl;
+    navarro(graph, patterns[i]);
+    cout << endl;
   }
+
+  auto duration = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - startTime);
+  cout << "Time: " << duration.count() << "ms" << endl;
 }
