@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <deque>
 #include <fstream>
+#include <chrono>
 
 using namespace std;
 
@@ -310,10 +311,12 @@ void navarro(Graph *graph, string pattern)
     }
   }
 
+  int minDp1 = graph->nodes[0]->dp1;
   for (auto n : graph->nodes)
   {
-    cout << n->name << ' ' << n->sequence << ' ' << n->dp1 << endl;
+    minDp1 = min(minDp1, n->dp1);
   }
+  cout << "score: " << minDp1 << endl;
 }
 
 int main(int argc, char *argv[])
@@ -335,7 +338,6 @@ int main(int argc, char *argv[])
 
   if (graphFile.empty() || patternsFile.empty())
   {
-    cout << graphFile << "|" << patternsFile << endl;
     cout << "Usage: algo -g <graph_file> -p <patterns_file>" << endl;
     return 1;
   }
@@ -343,8 +345,13 @@ int main(int argc, char *argv[])
   Graph *graph = getGraphFromFile(graphFile);
   vector<string> patterns = loadPatterns(patternsFile);
 
-  for (auto pattern : patterns)
+  auto startTime = chrono::high_resolution_clock::now();
+
+  for (auto i = 0; i < patterns.size(); i++)
   {
-    navarro(graph, pattern);
+    navarro(graph, patterns[i]);
   }
+
+  auto duration = chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now() - startTime);
+  cout << "Time: " << duration.count() << "ms" << endl;
 }
