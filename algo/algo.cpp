@@ -5,6 +5,7 @@
 #include <cmath>
 #include <set>
 #include <algorithm>
+#include <deque>
 using namespace std;
 
 struct Node;
@@ -35,9 +36,12 @@ struct Edge
 
 struct Node
 {
-  vector<Edge *> edges;
+  vector<Edge *> outgoing, incoming;
   string name;
   string sequence;
+  int dp1 = 0;
+  int dp2 = 0;
+  int order = 0;
   Node(string _name, string _sequence)
   {
     name = _name;
@@ -92,7 +96,9 @@ void decompose(Graph *oldGraph, Graph *newGraph)
 
       if (i > 0)
       {
-        oldNode->edges.push_back(new Edge(oldNode, false, node, false, 0));
+        Edge *newEdge = new Edge(oldNode, false, node, false, 0);
+        oldNode->outgoing.push_back(newEdge);
+        node->incoming.push_back(newEdge);
       }
       oldNode = node;
     }
@@ -100,17 +106,66 @@ void decompose(Graph *oldGraph, Graph *newGraph)
 
   for (auto n : oldGraph->nodes)
   {
-    for (auto e : n->edges)
+    for (auto e : n->outgoing)
     {
       Node *node1, *node2;
       node1 = nodeMap[e->node_a->name + "_" + to_string(e->node_a->sequence.size() - 1 - e->overlap)];
       node2 = nodeMap[e->node_b->name + "_0"];
-      node1->edges.push_back(new Edge(node1, false, node2, false, 0));
+
+      Edge *newEdge = new Edge(node1, false, node2, false, 0);
+      node1->outgoing.push_back(newEdge);
+      node2->incoming.push_back(newEdge);
     }
   }
 }
 
-int main()
+/*
+  Sorts the nodes topologically so the dp matrix could be initialized
+*/
+vector<Node *> topoSort(Graph *graph)
+{
+  map<Edge *, int> bio;
+  vector<Node *> ret;
+  deque<Node *> deque;
+
+  for (auto n : graph->nodes)
+  {
+    if (n->incoming.size() == 0)
+    {
+      deque.push_back(n);
+    }
+  }
+
+  while (!deque.empty())
+  {
+    Node *node = deque.front();
+    deque.pop_front();
+
+    ret.push_back(node);
+    for (auto e : node->outgoing)
+    {
+      bio[e] = 1;
+      bool noIncomingRemaining = true;
+      for (auto inc : e->node_b->incoming)
+      {
+        if (bio[inc] == 0)
+        {
+          noIncomingRemaining = false;
+        }
+      }
+      if (noIncomingRemaining)
+        deque.push_back(e->node_b);
+    }
+  }
+
+  return ret;
+}
+
+/*
+  Returns the graph from .gfa file
+  Graph is decomposed into nodes of sequence size 1
+*/
+Graph *getGraphFromFile()
 {
   Graph *graph = new Graph();
   vector<vector<string>> edges;
@@ -145,23 +200,96 @@ int main()
         (splittedInput[4] == "-"),
         stoi(splittedInput[5].substr(0, splittedInput[5].size() - 1)));
 
-    nodeMap[splittedInput[1]]->edges.push_back(edge);
+    nodeMap[splittedInput[1]]->outgoing.push_back(edge);
+    nodeMap[splittedInput[3]]->incoming.push_back(edge);
   }
 
   Graph *oneCharGraph = new Graph();
   decompose(graph, oneCharGraph);
 
-  /*
-    for (auto i : oneCharGraph->nodes)
+  vector<Node *> sorted = topoSort(oneCharGraph);
+  for (int i = 0; i < oneCharGraph->nodes.size(); i++)
+  {
+    oneCharGraph->nodes[i] = sorted[i];
+  }
+
+  return oneCharGraph;
+}
+
+/*
+  Function g from the navarro paper
+*/
+int g(Node *node, char c, int i)
+{
+  if (node->sequence[0] == c)
+  {
+    int ret = i - 1;
+    for (auto e : node->incoming)
     {
-      for (auto j : i->edges)
+      ret = min(ret, e->node_a->dp1);
+    }
+    return ret;
+  }
+  else
+  {
+    int ret = node->dp1;
+    for (auto e : node->incoming)
+    {
+      ret = min(ret, e->node_a->dp1);
+    }
+    return ret + 1;
+  }
+}
+
+/*
+  Function propagate from the navarro paper
+*/
+void propagate(Edge *edge)
+{
+  if (edge->node_b->dp1 > edge->node_a->dp1 + 1)
+  {
+    edge->node_b->dp1 = edge->node_a->dp1 + 1;
+    for (auto e : edge->node_b->outgoing)
+    {
+      propagate(e);
+    }
+  }
+}
+
+/*
+  Navarro algorithm implemented
+*/
+void navarro(Graph *graph, string pattern)
+{
+  for (int i = 0; i < pattern.size(); i++)
+  {
+    for (auto n : graph->nodes)
+    {
+      n->dp2 = g(n, pattern[i], i + 1);
+    }
+    for (auto n : graph->nodes)
+    {
+      n->dp1 = n->dp2;
+    }
+    for (auto n : graph->nodes)
+    {
+      for (auto e : n->outgoing)
       {
-        cout << j->node_a->name << " " << j->node_a->sequence << " / ";
-        cout << j->revComplement_a << endl;
-        cout << j->node_b->name << " " << j->node_b->sequence << " / ";
-        cout << j->revComplement_b << endl;
-        cout << j->overlap << endl;
+        propagate(e);
       }
     }
-    */
+  }
+
+  for (auto n : graph->nodes)
+  {
+    cout << n->name << ' ' << n->sequence << ' ' << n->dp1 << endl;
+  }
+}
+
+int main()
+{
+  Graph *graph = getGraphFromFile();
+
+  string pattern = "TCATTCTGACTGCAACGGGC";
+  navarro(graph, pattern);
 }
