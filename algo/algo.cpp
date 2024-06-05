@@ -311,10 +311,12 @@ void navarro(Graph *graph, string pattern)
     }
   }
 
+  int minDp1 = graph->nodes[0]->dp1;
   for (auto n : graph->nodes)
   {
-    cout << n->name << ' ' << n->sequence << ' ' << n->dp1 << endl;
+    minDp1 = min(minDp1, n->dp1);
   }
+  cout << "score: " << minDp1 << endl;
 }
 
 int main(int argc, char *argv[])
@@ -336,7 +338,6 @@ int main(int argc, char *argv[])
 
   if (graphFile.empty() || patternsFile.empty())
   {
-    cout << graphFile << "|" << patternsFile << endl;
     cout << "Usage: algo -g <graph_file> -p <patterns_file>" << endl;
     return 1;
   }
